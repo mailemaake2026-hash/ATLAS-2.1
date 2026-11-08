@@ -1,4 +1,4 @@
-name: Extract and Deploy ATLAS 2.1
+name: ATLAS 2.1 Automatic Extraction and Deployment
 
 on:
   push:
@@ -17,20 +17,24 @@ concurrency:
 
 jobs:
   extract-and-deploy:
+
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Verify ZIP archive
         run: |
           if [ ! -f ATLAS_2_1_GitHub_Ready.zip ]; then
-            echo "ATLAS ZIP file not found!"
+            echo "ERROR: ATLAS ZIP not found"
             exit 1
           fi
 
           unzip -tq ATLAS_2_1_GitHub_Ready.zip
+
+          echo "ZIP verification successful"
 
       - name: Extract ATLAS 2.1
         run: |
@@ -39,12 +43,9 @@ jobs:
           unzip -q ATLAS_2_1_GitHub_Ready.zip \
             -d /tmp/atlas
 
-          if [ ! -f /tmp/atlas/ATLAS_2_1/index.html ]; then
-            echo "Invalid ATLAS folder structure!"
-            exit 1
-          fi
+          test -f /tmp/atlas/ATLAS_2_1/index.html
 
-          echo "ATLAS archive verified."
+          echo "ATLAS extracted successfully"
 
       - name: Replace old application
         run: |
@@ -53,11 +54,12 @@ jobs:
             ! -name '.github' \
             -exec rm -rf {} +
 
-          cp -a /tmp/atlas/ATLAS_2_1/. .
+          rsync -a --exclude='.github/' \
+            /tmp/atlas/ATLAS_2_1/ ./
 
-          rm -f ATLAS_2_1_GitHub_Ready.zip
+          echo "Application replacement successful"
 
-      - name: Verify application files
+      - name: Verify application
         run: |
           test -f index.html
           test -f app.js
@@ -66,21 +68,34 @@ jobs:
           test -f manifest.webmanifest
           test -d backend
           test -d assets
+          test -d tests
 
-          echo "ATLAS 2.1 verification successful."
+          echo "Application files verified"
+
+      - name: Run ATLAS tests
+        run: |
+          npm test
+
+          npm run check
 
       - name: Save extracted application
         run: |
           git config user.name "github-actions[bot]"
+
           git config user.email \
             "41898282+github-actions[bot]@users.noreply.github.com"
+
+          rm -f ATLAS_2_1_GitHub_Ready.zip
 
           git add -A
 
           if ! git diff --cached --quiet; then
-            git commit -m "Deploy redesigned ATLAS 2.1 Command Deck"
+            git commit -m "Deploy ATLAS 2.1 Command Deck"
+
             git push
           fi
+
+          echo "ATLAS source files saved"
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -94,7 +109,10 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Deployment confirmation
+      - name: Confirm deployment
         run: |
-          echo "ATLAS 2.1 successfully deployed!"
+          echo "================================"
+          echo "ATLAS 2.1 DEPLOYMENT SUCCESSFUL"
+          echo "================================"
+
           echo "${{ steps.deployment.outputs.page_url }}"
