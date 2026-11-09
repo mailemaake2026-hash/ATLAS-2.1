@@ -29,11 +29,11 @@ jobs:
           mkdir -p atlas-source
           unzip -q "ATLAS_2_1_GitHub_Ready.zip" -d atlas-source
           echo "Extracted ATLAS files:"
-          find atlas-source -maxdepth 4 -type f
+          find atlas-source -maxdepth 5 -type f
 
       - name: Deploy ATLAS Worker
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config atlas-source/backend/wrangler.toml
+          command: deploy --config atlas-source/ATLAS_2_1/backend/wrangler.toml
