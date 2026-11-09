@@ -1,0 +1,39 @@
+name: Deploy ATLAS Worker
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "ATLAS_2_1_Github_Ready.zip"
+      - ".github/workflows/deploy-worker.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Extract ATLAS ZIP
+        run: |
+          mkdir -p atlas-source
+          unzip -q "ATLAS_2_1_Github_Ready.zip" -d atlas-source
+          echo "Extracted ATLAS files:"
+          find atlas-source -maxdepth 3 -type f
+
+      - name: Deploy ATLAS Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config atlas-source/backend/wrangler.toml
