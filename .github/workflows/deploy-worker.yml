@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "ATLAS_2_1_Github_Ready.zip"
+      - "ATLAS_2_1_GitHub_Ready.zip"
       - ".github/workflows/deploy-worker.yml"
 
 permissions:
@@ -27,9 +27,9 @@ jobs:
       - name: Extract ATLAS ZIP
         run: |
           mkdir -p atlas-source
-          unzip -q "ATLAS_2_1_Github_Ready.zip" -d atlas-source
+          unzip -q "ATLAS_2_1_GitHub_Ready.zip" -d atlas-source
           echo "Extracted ATLAS files:"
-          find atlas-source -maxdepth 3 -type f
+          find atlas-source -maxdepth 4 -type f
 
       - name: Deploy ATLAS Worker
         uses: cloudflare/wrangler-action@v3
